@@ -1,0 +1,16 @@
+/* globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Prevent weird rubber-band layout shifts under iOS standalone */
+html, body {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  overscroll-behavior-y: none;
+  background: #fff;
+  -webkit-tap-highlight-color: transparent; 
+}
