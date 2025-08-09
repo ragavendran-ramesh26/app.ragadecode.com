@@ -115,7 +115,7 @@ export default function ClientIncidentPage({
             onPick={goToDate}
           />
         </div>
-        
+
         <DateHeader date={formattedDate} />
 
         {activeTag && (
@@ -147,7 +147,7 @@ export default function ClientIncidentPage({
       <img
         src="/empty-page.svg"
         alt="No news"
-        className="mx-auto h-61 w-auto opacity-80"
+        className="mx-auto h-40 w-auto opacity-80"
       />
       <h2 className="text-lg font-semibold text-gray-900">
         No stories for {formattedDate}
@@ -171,28 +171,7 @@ export default function ClientIncidentPage({
         </button>
       </div>
 
-      {/* Optional: quick links to nearby days */}
-      <div className="mt-6 text-xs text-gray-500">
-        In case you missed it:
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          {[1,2,3].map(n => {
-            const d = new Date(selectedDate);
-            d.setDate(d.getDate() - n);
-            const y = d.getFullYear();
-            const m = getMonthName(d.getMonth());
-            const dd = formatDay(d.getDate());
-            return (
-              <a
-                key={n}
-                href={`/${y}/${m}/${dd}`}
-                className="rounded-full border px-3 py-1 hover:bg-gray-50"
-              >
-                {d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-              </a>
-            );
-          })}
-        </div>
-      </div>
+       
     </div>
   </div>
 ) : (
