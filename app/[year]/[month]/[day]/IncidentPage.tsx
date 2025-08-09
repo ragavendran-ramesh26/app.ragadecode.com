@@ -207,7 +207,7 @@ export default function ClientIncidentPage({
 
       {/* Bottom tabs */}
       <BottomTabBar
-        goHomeToday={goHomeToday}
+        goHome={() => router.push('/home')}
         openDate={() => setMobileDateOpen(true)}
         openCats={() => setMobileCatsOpen(true)}
         openSettings={() => setSettingsOpen(true)}

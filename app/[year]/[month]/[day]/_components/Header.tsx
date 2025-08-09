@@ -1,6 +1,6 @@
 export default function Header() {
   return (
-    <header className="w-full bg-white border-b">
+    <header className="sticky top-0 z-40 bg-white/90 border-b backdrop-blur supports-[backdrop-filter]:bg-white/70">
       <div className="px-4">
         <div className="flex justify-between items-center py-3">
           <a href="/" className="flex items-center gap-3 min-h-10">

@@ -1,19 +1,14 @@
+// app/[year]/[month]/[day]/_components/ArticleCard.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';
 import { ArticleItem } from '../_types';
 
-interface Props {
-  article: ArticleItem;
-}
-
-export default function ArticleCard({ article }: Props) {
+export default function ArticleCard({ article }: { article: ArticleItem }) {
   const router = useRouter();
+  const openInApp = () => router.push(`/article/${article.document_id}`);
 
-  const openInApp = () => {
-    // Go to our internal article page
-    router.push(`/article/${article.document_id}`);
-  };
+  const hasImage = typeof article.image === 'string' && article.image.trim().length > 0;
 
   return (
     <li
@@ -25,12 +20,18 @@ export default function ArticleCard({ article }: Props) {
       <h4 className="text-[15px] font-semibold text-gray-900">{article.title}</h4>
 
       <div className="mt-2 w-full overflow-hidden rounded-lg bg-gray-200">
-        <img
-          src={article.image}
-          alt={article.title}
-          className="w-full h-44 object-cover"
-          loading="lazy"
-        />
+        {hasImage ? (
+          <img
+            src={article.image!}
+            alt={article.title || 'Article image'}
+            className="w-full h-44 object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-44 grid place-items-center text-[12px] text-gray-500">
+            No image
+          </div>
+        )}
       </div>
 
       <p className="mt-2 text-[13px] text-gray-600 line-clamp-2">
@@ -38,7 +39,7 @@ export default function ArticleCard({ article }: Props) {
       </p>
 
       <div className="mt-2 text-[13px] text-gray-700 font-medium">
-        By {article.author}
+        By {article.author || 'RagaDecode'}
       </div>
 
       {(article.country || article.state || article.city) && (

@@ -5,20 +5,39 @@ import ArticleCard from '@/app/[year]/[month]/[day]/_components/ArticleCard';
 import type { ArticleItem } from '@/app/[year]/[month]/[day]/_types';
 import type { RawArticle } from '@/app/home/actions/getArticlesByHashtag';
 
-function toArticleItem(a: RawArticle): ArticleItem {
+function mapToArticleItem(a: RawArticle): ArticleItem | null {
+  // Accept snake/camel id or numeric fallback
+  const document_id =
+    (a as any).document_id ??
+    (a as any).documentId ??
+    (typeof a.id !== 'undefined' ? String(a.id) : undefined);
+  if (!document_id) return null;
+
   const country = a.countries?.[0]?.title || '';
   const state   = a.states?.[0]?.title || '';
   const city    = a.cities?.[0]?.title || '';
+
+  const image =
+    (a as any)?.coverimage?.url ??
+    (a as any)?.coverimage?.file?.url ??
+    '';
+
+  // Category may be missing unless populated
+  const category_name = (a as any)?.category?.name || (a as any)?.category?.title || '';
+  const category_slug = (a as any)?.category?.slug || '';
+
   return {
-    document_id: a.documentId,
+    document_id,
     title: a.title,
-    image: a.coverimage?.url || '',
+    image,
     short_description: a.short_description || '',
     author: a.author?.name || 'RagaDecode',
-    country, state, city,
+    country,
+    state,
+    city,
     slug: a.slug || '',
-    // category: a.category?.title || '',
-    // category_slug: a.category?.slug || '',
+    category: category_name,   // required by ArticleItem
+    category_slug,             // required by ArticleItem
   };
 }
 
@@ -42,10 +61,11 @@ export default function SwipeDeck({
   rawArticles?: RawArticle[];
   loading?: boolean;
 }) {
-  const items = useMemo(
-    () => (Array.isArray(rawArticles) ? rawArticles : []).map(toArticleItem),
-    [rawArticles]
-  );
+  // ✅ rawArticles is a prop, so compute inside the component
+  const items = useMemo(() => {
+    const arr = Array.isArray(rawArticles) ? rawArticles : [];
+    return arr.map(mapToArticleItem).filter(Boolean) as ArticleItem[];
+  }, [rawArticles]);
 
   if (!loading && items.length === 0) return null;
 
