@@ -54,7 +54,7 @@ export default function SplashScreen({
         <img
           src="https://genuine-compassion-eb21be0109.media.strapiapp.com/ragadecode_logo_668c5f78f9.png"
           alt="Raga Decode"
-          className="h-12 w-auto animate-pulse"
+          className="h-24 w-auto animate-pulse"
         />
         <p className="mt-3 text-xs text-gray-500 tracking-wide">
           Decoded News. Clear. Bold. Unfiltered.

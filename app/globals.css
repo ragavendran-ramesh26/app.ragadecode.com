@@ -3,7 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 /* Prevent weird rubber-band layout shifts under iOS standalone */
 html, body {
   height: 100%;

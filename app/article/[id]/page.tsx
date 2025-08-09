@@ -13,6 +13,32 @@ type IdParams = { id: string };
 const BASE_URL = process.env.RAGA_API_BASE!;
 const API_KEY = process.env.RAGA_API_KEY!;
 
+type ApiImageFormat = {
+    ext?: string;
+    url?: string;
+    hash?: string;
+    mime?: string;
+    name?: string;
+    path?: string | null;
+    size?: number;
+    width?: number;
+    height?: number;
+    sizeInBytes?: number;
+};
+
+type ApiImageFormats = {
+    small?: ApiImageFormat;
+    thumbnail?: ApiImageFormat;
+};
+
+type ApiAuthor = {
+    name?: string;
+    documentId?: string;
+    profile_image?: {
+        formats?: ApiImageFormats;
+    };
+};
+
 type ApiCoverFormats = { small?: { url?: string }; thumbnail?: { url?: string } };
 type ApiCover = { url?: string; formats?: ApiCoverFormats };
 type ApiArticle = {
@@ -30,7 +56,7 @@ type ApiArticle = {
     countries?: Array<{ title?: string }>;
     states?: Array<{ title?: string }>;
     cities?: Array<{ title?: string }>;
-    author?: { name?: string; documentId?: string };
+    author?: ApiAuthor;
 };
 
 function formatDateWithSuffix(date: Date) {
@@ -153,129 +179,109 @@ export default async function ArticlePage({ params }: { params: Promise<IdParams
 
     return (
         <main
-            className="min-h-screen bg-gray-50 w-full max-w-[900px] mx-auto"
-            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            className="min-h-screen w-full bg-white"
+            style={{
+                paddingTop: "max(env(safe-area-inset-top), 16px)",
+                paddingBottom: "env(safe-area-inset-bottom)",
+            }}
         >
-            {/* Rounded article card */}
-            <div className="mx-0 mt-0 mb-6 bg-white rounded-none overflow-hidden shadow-none">
-                {/* Hero with overlay + actions */}
-                <section className="relative">
-                    {/* Image */}
-                    {coverUrl ? (
-                        <img
-                            src={coverUrl}
-                            alt={title}
-                            className="h-64 w-full object-cover"
-                            loading="eager"
-                        />
-                    ) : (
-                        <div className="h-64 w-full bg-gray-200" />
-                    )}
+            <div className="w-full max-w-md mx-auto px-4">
+                {/* Card */}
+                <article className="relative pb-8">
+                    {/* Floating icon buttons */}
+                    <div className="relative px-4" style={{ paddingTop: "max(env(safe-area-inset-top), 12px)" }}>
+                        <div className="h-12" />
 
-                    {/* Dark gradient for legible text */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/0" />
+                        <BackButton icon className="absolute left-0 top-0" />
+                        <ShareButton icon title={title} text={art.short_description || title} url={publicWebUrl} className="absolute right-0 top-0" />
 
-                    {/* Top actions */}
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
-                        <BackButton className="bg-white/90 hover:bg-white text-gray-900 shadow-sm" />
-                        <ShareButton
-                            title={title}
-                            text={art.short_description || title}
-                            url={publicWebUrl}
-                            className="bg-white/90 hover:bg-white text-gray-900 shadow-sm"
-                        />
+                        {/* Rounded image below buttons */}
+                        {/* <img src={coverUrl!} alt={title} className="mt-3 w-full aspect-[16/9] object-cover rounded-2xl" /> */}
                     </div>
 
-                    {/* Title + meta over image */}
-                    <div className="absolute bottom-4 left-4 right-4">
-                        <h1 className="text-white text-[22px] font-extrabold leading-snug drop-shadow">
-                            {title}
-                        </h1>
-                        <div className="mt-1 text-white/90 text-[12px] flex flex-wrap items-center gap-2">
-                            {author && (
+                    {/* Cover */}
+                    <div className="mt-2">
+                        {coverUrl ? (
+                            <img
+                                src={coverUrl}
+                                alt={title}
+                                className="w-full aspect-[16/9] object-cover rounded-2xl"
+                                loading="eager"
+                            />
+                        ) : (
+                            <div className="w-full aspect-[16/9] rounded-2xl bg-slate-100" />
+                        )}
+                    </div>
+
+                    {/* Title */}
+                    <h1 className="mt-4 text-[20px] leading-7 font-extrabold text-slate-900 tracking-tight">
+                        {title}
+                    </h1>
+
+                    {/* Byline row */}
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <div className="flex items-center gap-2">
+                            {art.author?.profile_image?.formats?.small?.url ? (
+                                <img
+                                    src={art.author.profile_image.formats.small.url}
+                                    alt={author || "Author"}
+                                    className="h-6 w-6 rounded-full object-cover ring-1 ring-slate-200"
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <span className="inline-block h-6 w-6 rounded-full bg-slate-100 ring-1 ring-slate-200" />
+                            )}
+
+                            {author ? (
                                 art.author?.documentId ? (
                                     <Link
                                         href={`/author/${art.author.documentId}`}
                                         prefetch={false}
-                                        className="underline underline-offset-2 hover:text-white"
+                                        className="text-slate-700 hover:underline"
                                     >
-                                        By {author}
+                                        {author}
                                     </Link>
                                 ) : (
-                                    <Link
-                                        href="/about/author"
-                                        className="underline underline-offset-2 hover:text-white"
-                                    >
-                                        By {author}
-                                    </Link>
+                                    <span className="text-slate-700">{author}</span>
                                 )
-                            )}
-                            {publishedAt && !Number.isNaN(+publishedAt) && (
-                                <span>• {formatDateWithSuffix(publishedAtIST)}</span>
+                            ) : (
+                                <span>RagaDecode</span>
                             )}
                         </div>
 
-                        {locationLine && (
-                            <div className="text-white/80 text-[11px] mt-1">
-                                {locationLine}
-                            </div>
+                        {publishedAt && !Number.isNaN(+publishedAt) && (
+                            <time>{formatDateWithSuffix(publishedAtIST)}</time>
                         )}
-
                     </div>
 
-                </section>
+                    {locationLine && <div className="mt-3 text-[11px] text-slate-400">{locationLine}</div>}
 
-                {/* Body */}
-                <section className="px-4 pt-4 pb-6">
-
-
-                    {/* Content */}
-                    {html ? (
-                        <div className="mt-2">
-                            {/* Let tables scroll on small screens */}
-                            <div className="overflow-x-auto rounded-lg border border-gray-100">
-                                <article
-                                    className="
-          prose prose-sm max-w-none px-3 py-4
-          prose-headings:font-semibold prose-headings:text-gray-900
-          prose-p:text-gray-800
-          prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-          prose-strong:text-gray-900
-          prose-blockquote:border-l-4 prose-blockquote:border-gray-200 prose-blockquote:text-gray-700
-          prose-code:text-pink-600 prose-pre:bg-gray-50 prose-pre:p-3 prose-pre:rounded-md
-          prose-img:rounded-lg
-          prose-table:my-4 prose-th:font-semibold prose-th:bg-gray-50
-          prose-hr:my-6
-          [table]:min-w-full [table]:text-left [th,td]:px-3 [th,td]:py-2
-          [tr]:border-b [tr]:border-gray-100 first:[tr]:border-t-0
-        "
-                                    // trusted HTML from your backend (now sanitized)
-                                    dangerouslySetInnerHTML={{ __html: html }}
-                                />
-                            </div>
-                        </div>
-                    ) : art.short_description ? (
-                        <p className="text-sm text-gray-800">{art.short_description}</p>
-                    ) : (
-                        <p className="text-sm text-gray-500">No content available.</p>
-                    )}
-                </section>
-            </div>
-
-            {/* Sticky bottom share (mobile) */}
-            <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 border-t bg-white/95 backdrop-blur">
-                <div className="px-3 py-2 flex items-center justify-between">
-                    <span className="text-[12px] text-gray-500 line-clamp-1">
-                        {art.short_description || "Read more on Raga Decode"}
-                    </span>
-                    <ShareButton
-                        title={title}
-                        text={art.short_description || title}
-                        url={publicWebUrl}
-                    />
-
-                </div>
+                    {/* Body */}
+                    <div className="mt-3">
+                        {html ? (
+                            <article
+                                className="
+        prose prose-slate prose-sm max-w-none
+        prose-headings:font-semibold prose-headings:text-slate-900
+        prose-p:text-slate-700 prose-p:leading-7
+        prose-a:text-blue-600 hover:prose-a:underline
+        prose-strong:text-slate-900
+        prose-img:rounded-xl
+        prose-blockquote:border-l-4 prose-blockquote:border-slate-200
+        prose-table:my-4 prose-th:bg-slate-50
+        [table]:min-w-full [th,td]:px-3 [th,td]:py-2
+      "
+                                dangerouslySetInnerHTML={{ __html: html }}
+                            />
+                        ) : art.short_description ? (
+                            <p className="text-sm text-slate-700 leading-7">{art.short_description}</p>
+                        ) : (
+                            <p className="text-sm text-slate-500">No content available.</p>
+                        )}
+                    </div>
+                </article>
             </div>
         </main>
     );
+
 }

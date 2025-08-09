@@ -13,6 +13,8 @@ import DateSheet from "./_components/DateSheet";
 import CategorySheet from "./_components/CategorySheet";
 import SettingsSheet from "./_components/SettingsSheet";
 
+import SmartTimeline from '@/app/home/_components/SmartTimeline';
+import type { CountRow } from '@/app/home/actions/getTimelineCounts';
 import type { IncidentData } from "./_types";
 import { dateFromParamsUTC, useFormattedDate } from "./_hooks/useSafeDate";
 
@@ -21,6 +23,7 @@ type Props = {
   month: string;
   day: string;
   incidentData: IncidentData;
+  counts: CountRow[];
 };
 
 export default function ClientIncidentPage({
@@ -28,6 +31,7 @@ export default function ClientIncidentPage({
   month,
   day,
   incidentData,
+  counts
 }: Props) {
   const router = useRouter();
 
@@ -45,8 +49,19 @@ export default function ClientIncidentPage({
   const [mobileCatsOpen, setMobileCatsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const goToDate = useCallback((d: Date) => {
+    setSelectedDate(d);
+    const y = d.getFullYear();
+    const m = getMonthName(d.getMonth());
+    const dd = formatDay(d.getDate());
+    router.push(`/${y}/${m}/${dd}`);
+  }, [router]);
+
+  const openCalendar = useCallback(() => setMobileDateOpen(true), []);
+
   // optional PWA flag if you want it later
   const [isStandalone, setIsStandalone] = useState(false);
+
   useEffect(() => {
     const standalone =
       (window.matchMedia &&
@@ -89,6 +104,18 @@ export default function ClientIncidentPage({
 
       {/* Main */}
       <main className="with-fixed-header px-3 sm:px-4 pb-24 bg-white">
+
+        {/* SmartTimeline at top */}
+        <div className="pt-2">
+          <SmartTimeline
+            selectedDate={selectedDate}
+            counts={counts}
+            daysBefore={7}
+            daysAfter={7}            // component caps future to today
+            onPick={goToDate}
+          />
+        </div>
+        
         <DateHeader date={formattedDate} />
 
         {activeTag && (
@@ -115,8 +142,60 @@ export default function ClientIncidentPage({
         )}
 
         {incidentData.data.length === 0 ? (
-          <p className="text-gray-500">No incidents found for this date.</p>
-        ) : (
+  <div className="flex-1 flex items-center justify-center">
+    <div className="text-center px-6">
+      <img
+        src="/empty-page.svg"
+        alt="No news"
+        className="mx-auto h-61 w-auto opacity-80"
+      />
+      <h2 className="text-lg font-semibold text-gray-900">
+        No stories for {formattedDate}
+      </h2>
+      <p className="text-sm text-gray-500 mt-1">
+        Try another date or adjust filters.
+      </p>
+
+      <div className="mt-6 flex items-center justify-center gap-3">
+        <button
+          onClick={openCalendar}
+          className="rounded-full bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700 active:scale-[.99]"
+        >
+          Browse Calendar
+        </button>
+        <button
+          onClick={goHomeToday}
+          className="rounded-full border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50 active:scale-[.99]"
+        >
+          Jump to Today
+        </button>
+      </div>
+
+      {/* Optional: quick links to nearby days */}
+      <div className="mt-6 text-xs text-gray-500">
+        In case you missed it:
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          {[1,2,3].map(n => {
+            const d = new Date(selectedDate);
+            d.setDate(d.getDate() - n);
+            const y = d.getFullYear();
+            const m = getMonthName(d.getMonth());
+            const dd = formatDay(d.getDate());
+            return (
+              <a
+                key={n}
+                href={`/${y}/${m}/${dd}`}
+                className="rounded-full border px-3 py-1 hover:bg-gray-50"
+              >
+                {d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  </div>
+) : (
           incidentData.data.map((category, i) => (
             <section key={`cat-${i}`} className="mb-6">
               <h3 className="text-red-600 font-semibold text-base mb-3">

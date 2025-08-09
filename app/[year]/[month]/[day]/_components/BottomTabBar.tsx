@@ -3,6 +3,7 @@ interface Props {
   openDate: () => void;
   openCats: () => void;
   openSettings: () => void;
+  
 }
 
 export default function BottomTabBar({ goHomeToday, openDate, openCats, openSettings }: Props) {
@@ -21,6 +22,7 @@ export default function BottomTabBar({ goHomeToday, openDate, openCats, openSett
         <button onClick={openDate} className="flex flex-col items-center justify-center gap-1 py-2 min-h-12">
           📅 <span className="text-[11px]">Calendar</span>
         </button>
+
         <button onClick={openCats} className="flex flex-col items-center justify-center gap-1 py-2 min-h-12">
           📂 <span className="text-[11px]">Filter</span>
         </button>
