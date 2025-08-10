@@ -9,30 +9,31 @@ import DateSheet from '@/app/[year]/[month]/[day]/_components/DateSheet';
 import SettingsSheet from '@/app/[year]/[month]/[day]/_components/SettingsSheet';
 import SmartTimeline, { type TimelineItem } from './_components/SmartTimeline';
 import { getMonthName, formatDay } from '@app/utils/months';
-import IndiaChoropleth, { type StateDatum } from './_components/IndiaChoropleth';
+import IndiaChoropleth from './_components/IndiaChoropleth';
 import CategoryChips from './_components/CategoryChips';
 import type { Category } from './actions/getCategories';
 import SwipeDeck from './_components/SwipeDeck';
 import type { RawArticle } from './actions/getArticlesByHashtag';
+
+/* ---------- utils ---------- */
 
 function fromISO(iso: string) {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
-// deterministic date label to avoid SSR/client differences
 function formatDateLabel(d: Date) {
   const weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${weekdays[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-const stateCounts: Record<string, StateDatum> = {
-  'Tamil Nadu': { value: 12, meta: { href: '/locations/india/tamilnadu' } },
-  Maharashtra:  { value: 9,  meta: { href: '/locations/india/maharashtra' } },
-  Karnataka:    { value: 6 },
-  'Uttar Pradesh': { value: 5 },
-  Kerala:       { value: 4 },
+/* ---------- props ---------- */
+
+type HeatDatum = {
+  value: number;
+  metrics: { murder: number; rape: number; accident: number; suicide: number };
+  meta?: { href?: string; label?: string; slug?: string };
 };
 
 export default function ClientHomePage({
@@ -42,6 +43,7 @@ export default function ClientHomePage({
   categoriesError,
   decks = {},
   decksError,
+  stateHeatmap = {}, // 🔥 from server via API
 }: {
   todayISO: string;
   items: TimelineItem[];
@@ -49,6 +51,7 @@ export default function ClientHomePage({
   categoriesError?: string;
   decks?: Record<string, RawArticle[]>;
   decksError?: string;
+  stateHeatmap?: Record<string, HeatDatum>; // key = state name matching GeoJSON
 }) {
   const router = useRouter();
   const today = useMemo(() => fromISO(todayISO), [todayISO]);
@@ -70,18 +73,30 @@ export default function ClientHomePage({
 
   const goHomeToday = useCallback(() => goToDate(today), [goToDate, today]);
 
+  // map mode: which metric to color by
+  const [mode, setMode] = useState<'total'|'murder'|'rape'|'accident'|'suicide'>('total');
+
+  // transform to the shape IndiaChoropleth expects: { [state]: { value, metrics, meta } }
+  const mapData = useMemo(() => {
+    const out: Record<string, { value: number; metrics: HeatDatum['metrics']; meta?: HeatDatum['meta'] }> = {};
+    for (const [name, d] of Object.entries(stateHeatmap)) {
+      out[name] = {
+        value: mode === 'total' ? d.value : d.metrics[mode],
+        metrics: d.metrics,
+        meta: d.meta,
+      };
+    }
+    return out;
+  }, [stateHeatmap, mode]);
+
   return (
     <div
       className="min-h-screen bg-gray-50 flex flex-col w-full max-w-[900px] mx-auto"
-      style={{
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <Header />
 
       <main className="with-fixed-header px-3 sm:px-4 pb-24 bg-white">
-        {/* deterministic label prevents hydration mismatch */}
         <DateHeader date={formatDateLabel(today)} />
 
         <div className="mt-3">
@@ -114,19 +129,32 @@ export default function ClientHomePage({
           </>
         )}
 
+        {/* mode switch for the heatmap */}
+        <div className="mt-6 flex gap-2 text-xs">
+          {(['total','murder','rape','accident','suicide'] as const).map(m => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-3 py-1 rounded-full border ${mode===m ? 'bg-gray-900 text-white' : 'bg-white'}`}
+              aria-pressed={mode===m}
+            >
+              {m === 'total' ? 'All' : m[0].toUpperCase() + m.slice(1)}
+            </button>
+          ))}
+        </div>
+
         <IndiaChoropleth
-          data={stateCounts}
-          title="Incidents by State (Last 7 Days)"
-          legend="Total"
-          onStateClick={(state) => {
-            // router.push(`/locations/india/${slugify(state)}`);
-            console.log('Clicked:', state);
+          data={mapData}
+          title={`Incidents by State (${mode === 'total' ? 'All' : mode})`}
+          legend="Count"
+          onStateClick={(_, d) => {
+            if (d?.meta?.href) window.location.href = d.meta.href;
           }}
         />
       </main>
 
       <BottomTabBar
-        goHome={() => router.push('/home')}
+        goHome={() => router.push('/home')} 
         openDate={() => setMobileDateOpen(true)}
         openCats={() => router.push('/categories')}
         openSettings={() => setSettingsOpen(true)}
@@ -140,9 +168,7 @@ export default function ClientHomePage({
         />
       )}
 
-      {settingsOpen && (
-        <SettingsSheet onClose={() => setSettingsOpen(false)} />
-      )}
+      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }

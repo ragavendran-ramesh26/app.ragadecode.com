@@ -3,6 +3,7 @@ import { getTimelineCounts } from './actions/getTimelineCounts';
 import { getCategories } from './actions/getCategories';
 import ClientHomePage from './ClientHomePage';
 import { getArticlesForHashtags } from './actions/getArticlesByHashtag';
+import { getStateHeatmap } from './actions/getStateHeatmap';
 
 export default async function HomePage() {
     const today = new Date();
@@ -15,6 +16,10 @@ export default async function HomePage() {
     const tags = ['viral', 'murder', 'rape', 'accident'];
     const { data: decks, error: decksError } = await getArticlesForHashtags(tags, 12);
 
+    const { data: stateHeatmap, error: heatmapError } = await getStateHeatmap();
+
+   
+
     return (
         <ClientHomePage
             todayISO={today.toISOString().slice(0, 10)}
@@ -23,6 +28,8 @@ export default async function HomePage() {
             categoriesError={categoriesError}
             decks={decks}
             decksError={decksError}
+            stateHeatmap={stateHeatmap}
+            heatmapError={heatmapError}
         />
     );
 }
